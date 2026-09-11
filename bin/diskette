@@ -112,6 +112,9 @@ cmd_install() {
 }
 
 cmd_update() {
+	info "Pulling latest diskette repo"
+	git -C "$REPO_ROOT" pull --ff-only
+
 	deploy_units
 	install_packages
 
@@ -170,6 +173,7 @@ cmd_stop() {
 
 
 cmd_restart() {
+	target="${1:-$SERVICES}"
   reload_daemon
 	info "Restarting services"
 	systemctl --user restart $target
