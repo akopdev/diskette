@@ -1,0 +1,37 @@
+██████  ██ ███████ ██   ██ ███████ ████████ ████████ ███████
+██   ██ ██ ██      ██  ██  ██         ██       ██    ██
+██   ██ ██ ███████ █████   █████      ██       ██    █████
+██   ██ ██      ██ ██  ██  ██         ██       ██    ██
+██████  ██ ███████ ██   ██ ███████    ██       ██    ███████
+
+Media server and persistent storage on a tiny Raspberry Pi 5
+
+Install
+-------
+
+On Debian, run the following command and follow the instructions:
+
+```
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/akopdev/diskette/HEAD/install.sh)"
+
+```
+The installer will prompt you to set variables and secrets, then perform the initial server configuration.
+
+After installation, you can use the `diskette` command to maintain the server.
+
+```
+$ diskette help
+
+Usage: diskette <command>
+
+Commands:
+  install                     Setup server from scratch
+  update                      Update already running server
+  backup                      Backup server
+  restore [SNAPSHOT]          Restore server from backup snapshot
+  start [SERVICE]             Start service
+  stop [SERVICE]              Stop running service
+  restart [SERVICE]           Restart all services
+  logs [SERVICE]              Show full log history
+  help                        Show this help
+```

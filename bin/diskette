@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+
+REPO_ROOT=${REPO_ROOT:-"/srv/diskette"}
+
+QUADLET_DIR=${QUADLET_DIR:-"$HOME/.config/containers/systemd"}
+SYSTEMD_DIR=${SYSTEMD_DIR:-"$HOME/.config/systemd/user"}
+ENV_FILE="$REPO_ROOT/.env"
+SERVICES="postgres.service jellyfin.service syncthing.service samba.service"
+
+info() {
+	printf '\033[33m[ INFO ]\033[0m %s\n' "$*"
+}
+
+
+error() {
+	printf '\033[31m[ ERROR ]\033[0m %b\n' "$*" >&2
+  exit 1
+}
+
+reload_daemon() {
+	info "Reloading systemd deamon"
+  systemctl --user daemon-reload
+}
+
+deploy_units() {
+	info "Deploying quadlets and systemd units"
+	chmod 600 "$ENV_FILE"
+
+	mkdir -p "$(dirname "$QUADLET_DIR")" "$(dirname "$SYSTEMD_DIR")"
+	rm -rf "$QUADLET_DIR" "$SYSTEMD_DIR"
+	ln -sfn "$REPO_ROOT/quadlets" "$QUADLET_DIR"
+	ln -sfn "$REPO_ROOT/systemd" "$SYSTEMD_DIR"
+
+  reload_daemon
+	sync_secrets
+}
+
+sync_secrets() {
+	info "Syncing Podman secrets"
+  printf '%s' "$SAMBA_USER" | podman secret create --replace SAMBA_USER -
+  printf '%s' "$SAMBA_PASSWORD" | podman secret create --replace SAMBA_PASSWORD -
+}
+
+restic_init() {
+	info "Checking restic repository"
+	if ! restic snapshots >/dev/null 2>&1; then
+		info "Initializing restic repository..."
+		restic init
+	fi
+}
+
+wait_for_postgres() {
+	info "Waiting for postgres..."
+	i=0
+	while ! podman exec postgres pg_isready -U postgres >/dev/null 2>&1; do
+		i=$((i + 1))
+		[ "$i" -le 60 ] || { error "Failed to start postgres. Run 'diskette logs' for details."; }
+		sleep 1
+	done
+}
+
+install_packages() {
+	info "Installing packages"
+	sudo apt-get -y upgrade
+	sudo apt-get update
+	sudo xargs -a "$REPO_ROOT/packages.txt" apt-get install -y
+}
+
+cmd_help() {
+	cat <<-'EOF'
+	██████  ██ ███████ ██   ██ ███████ ████████ ████████ ███████
+	██   ██ ██ ██      ██  ██  ██         ██       ██    ██
+	██   ██ ██ ███████ █████   █████      ██       ██    █████
+	██   ██ ██      ██ ██  ██  ██         ██       ██    ██
+	██████  ██ ███████ ██   ██ ███████    ██       ██    ███████
+
+	Usage: diskette <command>
+
+	Commands:
+	  install                     Setup server from scratch
+	  update                      Update already running server
+	  backup                      Backup server
+	  restore [SNAPSHOT]          Restore server from backup snapshot
+	  start [SERVICE]             Start service
+	  stop [SERVICE]              Stop running service
+	  restart [SERVICE]           Restart all services
+	  logs [SERVICE]              Show full log history
+	  help                        Show this help
+	EOF
+}
+
+cmd_install() {
+	install_packages
+
+	info "Creating data directories"
+	sudo mkdir -p /srv/media /srv/sync /srv/databases/postgres/data
+	sudo mkdir -p /srv/appdata/jellyfin/{config,cache} /srv/appdata/syncthing /srv/appdata/postgres/backup
+	sudo chown -R "$(id -un)":"$(id -gn)" /srv/media /srv/sync /srv/databases /srv/appdata
+
+	info "Enabling linger for $(id -un)"
+	sudo loginctl enable-linger "$(id -un)"
+
+	deploy_units
+	restic_init
+
+	info "Starting services"
+	systemctl --user start $SERVICES
+	systemctl --user enable --now backup.timer
+}
+
+cmd_update() {
+	deploy_units
+	install_packages
+
+  cmd_restart
+
+	info "Auto-updating container images"
+	podman auto-update
+}
+
+cmd_backup() {
+	info "Dumping Postgres databases"
+	podman exec postgres pg_dumpall -U postgres >/srv/appdata/postgres/backup/all-databases.sql
+
+	info "Running restic backup"
+	restic backup --tag diskette --host fd0 /srv/appdata/jellyfin/config /srv/appdata/syncthing /srv/media /srv/appdata/postgres/backup
+
+	info "Pruning old snapshots"
+	restic forget --tag diskette --host fd0 --prune --keep-daily 7 --keep-weekly 4 --keep-monthly 6
+}
+
+cmd_restore() {
+	snapshot="${1:-latest}"
+
+	info "Restoring from snapshot: $snapshot"
+  reload_daemon
+
+	info "Stopping services"
+	systemctl --user stop $SERVICES
+
+	info "Running restic restore"
+	restic restore "$snapshot" --target /
+
+	info "Starting postgres"
+	systemctl --user start postgres.service
+	wait_for_postgres
+
+	info "Reloading database dump"
+	podman exec -i postgres psql -U postgres </srv/appdata/postgres/backup/all-databases.sql
+
+	info "Starting remaining services"
+	systemctl --user start jellyfin.service syncthing.service samba.service
+}
+
+cmd_start() {
+	target="${1:-$SERVICES}"
+	info "Starting $target"
+	systemctl --user start $target
+}
+
+cmd_stop() {
+	target="${1:-$SERVICES}"
+	info "Stopping $target"
+	systemctl --user stop $target
+}
+
+
+cmd_restart() {
+  reload_daemon
+	info "Restarting services"
+	systemctl --user restart $target
+}
+
+cmd_logs() {
+  if [ -n "$1" ]; then
+    journalctl --user -u "$1" | less +G
+  else
+    journalctl --user -u ${SERVICES// / -u } | less +G
+  fi
+}
+
+
+# Check if config file exists
+if [ ! -f "$ENV_FILE" ]; then
+  error "$ENV_FILE not found.\n\nRun: cp $REPO_ROOT/.env.example $ENV_FILE\nthen fill in real values."
+fi
+
+# Load environment variables from config file
+set -a
+source "$ENV_FILE"
+set +a
+
+cmd="${1:-help}"
+[ $# -gt 0 ] && shift
+
+case "$cmd" in
+  install) cmd_install "$@" ;;
+  update) cmd_update "$@" ;;
+  backup) cmd_backup "$@" ;;
+  restore) cmd_restore "$@" ;;
+  start) cmd_start "$@" ;;
+  stop) cmd_stop "$@" ;;
+  restart) cmd_restart "$@" ;;
+  logs) cmd_logs "$@" ;;
+  help | -h | --help) cmd_help ;;
+  *)
+  error "Unknown command: $cmd"
+  ;;
+esac
+

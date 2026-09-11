@@ -1,0 +1,31 @@
+[Unit]
+Description=Jellyfin media server
+After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Container]
+Image=docker.io/jellyfin/jellyfin:latest
+AutoUpdate=registry
+ContainerName=jellyfin
+Network=diskette.network
+PublishPort=8096:8096
+PublishPort=7359:7359/udp
+PublishPort=1900:1900/udp
+Volume=/srv/appdata/jellyfin/config:/config
+Volume=/srv/appdata/jellyfin/cache:/cache
+Volume=/srv/media:/media:ro
+Environment=TZ=Europe/Amsterdam
+
+# Health check
+HealthCmd=curl -f http://localhost:8096/health || exit 1
+HealthInterval=30s
+HealthTimeout=10s
+HealthRetries=3
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

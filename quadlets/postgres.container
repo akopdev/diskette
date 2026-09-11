@@ -1,0 +1,26 @@
+[Unit]
+Description=Postgres database
+After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Container]
+Image=docker.io/library/postgres:16-alpine
+ContainerName=postgres
+Network=diskette.network
+AutoUpdate=registry
+PublishPort=5432:5432
+Volume=/srv/databases/postgres/data:/var/lib/postgresql/data
+EnvironmentFile=/srv/diskette/.env
+UserNS=keep-id:uid=1000,gid=1000
+HealthCmd=pg_isready -U postgres
+HealthInterval=30s
+HealthTimeout=5s
+HealthRetries=5
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

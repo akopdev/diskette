@@ -1,0 +1,18 @@
+#cloud-config
+users:
+  - name: akop
+    lock_passwd: false
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+ssh_pwauth: true
+chpasswd:
+  expire: false
+  users:
+    - name: akop 
+      password: akop
+      type: text
+mounts:
+  - [ "diskette", "/srv/diskette", "9p", "trans=virtio,version=9p2000.L,rw,nofail", "0", "0" ]
+runcmd:
+  - chown -R akop:akop /home/akop
+  - chown -R akop:akop /srv/diskette

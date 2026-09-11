@@ -1,0 +1,9 @@
+.env
+!.env.example
+*.qcow2
+*.img
+*.xz
+*.dmg
+*.asc
+*.iso
+systemd/*.wants/

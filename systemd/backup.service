@@ -1,0 +1,8 @@
+[Unit]
+Description=Diskette nightly backup (pg_dump, then restic backup, then prune)
+After=postgres.service
+Requires=postgres.service
+
+[Service]
+Type=oneshot
+ExecStart=/srv/diskette/bin/diskette backup
