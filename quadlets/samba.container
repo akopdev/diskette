@@ -16,7 +16,6 @@ Environment=UID=1000
 Environment=GID=1000
 Secret=SAMBA_USER,type=env,target=USER
 Secret=SAMBA_PASSWORD,type=env,target=PASS
-UserNS=keep-id:uid=1000,gid=1000
 
 [Service]
 SuccessExitStatus=0 126
