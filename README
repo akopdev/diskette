@@ -11,27 +11,32 @@ Install
 
 On Debian, run the following command and follow the instructions:
 
-```
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/akopdev/diskette/HEAD/install.sh)"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/akopdev/diskette/HEAD/install.sh)"
 
-```
 The installer will prompt you to set variables and secrets, then perform the initial server configuration.
 
 After installation, you can use the `diskette` command to maintain the server.
 
-```
-$ diskette help
+    $ diskette help
 
-Usage: diskette <command>
+    Usage: diskette <command>
 
-Commands:
-  install                     Setup server from scratch
-  update                      Update already running server
-  backup                      Backup server
-  restore [SNAPSHOT]          Restore server from backup snapshot
-  start [SERVICE]             Start service
-  stop [SERVICE]              Stop running service
-  restart [SERVICE]           Restart all services
-  logs [SERVICE]              Show full log history
-  help                        Show this help
-```
+    Commands:
+      install                     Setup server from scratch
+      update                      Update already running server
+      backup                      Backup server
+      restore [SNAPSHOT]          Restore server from backup snapshot
+      start [SERVICE]             Start service
+      stop [SERVICE]              Stop running service
+      restart [SERVICE]           Restart all services
+      logs [SERVICE]              Show full log history
+      help                        Show this help
+
+Troubleshooting
+---------------
+
+If you run diskette from NVMe disk, you have to enable PCIe header in RPi OS
+by adding instructions to `config.txt` file, located in the root folder.
+
+    dtparam=pciex1
+    dtparam=pciex1_gen=3
