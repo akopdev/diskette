@@ -8,7 +8,7 @@ export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNT
 QUADLET_DIR=${QUADLET_DIR:-"$HOME/.config/containers/systemd"}
 SYSTEMD_DIR=${SYSTEMD_DIR:-"$HOME/.config/systemd/user"}
 ENV_FILE="$REPO_ROOT/.env"
-SERVICES="postgres.service jellyfin.service syncthing.service samba.service"
+SERVICES="postgres.service jellyfin.service syncthing.service"
 
 info() {
 	printf '\033[33m[ INFO ]\033[0m %s\n' "$*"
@@ -35,13 +35,6 @@ deploy_units() {
 	ln -sfn "$REPO_ROOT/systemd" "$SYSTEMD_DIR"
 
   reload_daemon
-	sync_secrets
-}
-
-sync_secrets() {
-	info "Syncing Podman secrets"
-  printf '%s' "$SAMBA_USER" | podman secret create --replace SAMBA_USER -
-  printf '%s' "$SAMBA_PASSWORD" | podman secret create --replace SAMBA_PASSWORD -
 }
 
 restic_init() {
@@ -156,7 +149,7 @@ cmd_restore() {
 	podman exec -i postgres psql -U postgres </srv/appdata/postgres/backup/all-databases.sql
 
 	info "Starting remaining services"
-	systemctl --user start jellyfin.service syncthing.service samba.service
+	systemctl --user start jellyfin.service syncthing.service
 }
 
 cmd_start() {

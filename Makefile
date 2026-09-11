@@ -33,7 +33,7 @@ run: $(IMAGE_FILE) $(SEED_IMAGE)  ## Run local test environment.
 				-bios $(QEMU_BIOS_PATH) \
 				-drive if=virtio,file=$(IMAGE_FILE),format=qcow2 \
 				-drive if=virtio,format=raw,file=$(SEED_IMAGE) \
-				-netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::8096-:8096,hostfwd=tcp::8384-:8384,hostfwd=tcp::5432-:5432,hostfwd=tcp::4445-:4455 \
+				-netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::8096-:8096,hostfwd=tcp::8384-:8384,hostfwd=tcp::5432-:5432 \
 				-device virtio-net-pci,netdev=net0 \
 				-fsdev local,id=fsdev0,path=.,security_model=mapped-xattr \
 				-device virtio-9p-pci,fsdev=fsdev0,mount_tag=diskette
