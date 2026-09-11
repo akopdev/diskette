@@ -174,9 +174,9 @@ cmd_restart() {
 
 cmd_logs() {
   if [ -n "$1" ]; then
-    journalctl --user -u "$1" | less +G
+    journalctl "_SYSTEMD_USER_UNIT=$1" | less +G
   else
-    journalctl --user -u ${SERVICES// / -u } | less +G
+    journalctl _SYSTEMD_USER_UNIT=${SERVICES// / _SYSTEMD_USER_UNIT=} | less +G
   fi
 }
 
