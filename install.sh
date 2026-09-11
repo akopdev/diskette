@@ -4,7 +4,12 @@ REPO_URL="https://github.com/akopdev/diskette.git"
 REPO_DIR="/srv/diskette"
 BIN_LINK="/usr/local/bin/diskette"
 
+
 if [ ! -d "$REPO_DIR" ]; then
+  if ! command -v git >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo apt-get install -y git
+  fi
 	sudo mkdir -p "$REPO_DIR"
 	sudo chown "$(id -un)":"$(id -gn)" "$REPO_DIR"
 	git clone "$REPO_URL" "$REPO_DIR"
