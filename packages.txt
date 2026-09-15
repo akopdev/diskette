@@ -6,3 +6,4 @@ netavark
 aardvark-dns
 dbus-user-session
 restic
+rpi-eeprom

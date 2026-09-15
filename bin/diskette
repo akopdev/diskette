@@ -55,6 +55,39 @@ wait_for_postgres() {
 	done
 }
 
+
+print_live_metrics() {
+	echo "Temperature"
+	printf "  %s\n" "$(vcgencmd measure_temp | cut -d= -f2)"
+
+	echo
+	echo "CPU usage"
+	top -bn1 | awk -F'[ ,]+' '/Cpu\(s\)/ {printf "  %s%% used\n", $2+$4}'
+
+	echo
+	echo "Memory usage"
+	free -h | awk 'NR==2{printf "  %s / %s used\n", $3, $2}'
+}
+
+print_network() {
+	echo "Network"
+	for iface in /sys/class/net/*; do
+		name="$(basename "$iface")"
+		case "$name" in
+			lo) continue ;;
+			wl*) label="Wifi" ;;
+			en*|eth*) label="Ethernet" ;;
+			*) label="$name" ;;
+		esac
+		printf "  %-10s %s\n" "$label" "$(cat "$iface/operstate" 2>/dev/null)"
+	done
+}
+
+print_hdd() {
+	echo "Hard drive usage"
+	df -h /srv/media | awk 'NR==2{printf "  %s / %s used (%s)\n", $3, $2, $5}'
+}
+
 install_packages() {
 	info "Installing packages"
 	sudo apt-get -y upgrade
@@ -81,6 +114,7 @@ cmd_help() {
 	  stop [SERVICE]              Stop running service
 	  restart [SERVICE]           Restart all services
 	  logs [SERVICE]              Show full log history
+	  metrics [-w|--watch]        Show server performance metrics
 	  help                        Show this help
 	EOF
 }
@@ -115,6 +149,11 @@ cmd_update() {
 
 	info "Auto-updating container images"
 	podman auto-update
+
+	if command -v rpi-eeprom-update >/dev/null 2>&1; then
+		info "Updating Raspberry Pi firmware"
+		sudo rpi-eeprom-update -a
+	fi
 }
 
 cmd_backup() {
@@ -180,6 +219,25 @@ cmd_logs() {
   fi
 }
 
+cmd_metrics() {
+	print_network
+	echo
+	print_hdd
+	echo
+
+	if [ "$1" = "-w" ] || [ "$1" = "--watch" ]; then
+		tput sc
+		while true; do
+			tput rc
+			tput ed
+			print_live_metrics
+			sleep 3
+		done
+	else
+		print_live_metrics
+	fi
+}
+
 
 # Check if config file exists
 if [ ! -f "$ENV_FILE" ]; then
@@ -203,6 +261,7 @@ case "$cmd" in
   stop) cmd_stop "$@" ;;
   restart) cmd_restart "$@" ;;
   logs) cmd_logs "$@" ;;
+  metrics) cmd_metrics "$@" ;;
   help | -h | --help) cmd_help ;;
   *)
   error "Unknown command: $cmd"
