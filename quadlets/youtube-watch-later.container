@@ -1,0 +1,17 @@
+[Unit]
+Description=Fetch new videos from YouTube
+After=network-online.target
+
+[Container]
+Image=ghcr.io/jauderho/yt-dlp:latest
+ContainerName=youtube-watch-later
+AutoUpdate=registry
+Network=diskette.network
+Volume=/srv/media/download:/downloads
+EnvironmentFile=/srv/diskette/.env
+Entrypoint=sh -c
+Exec='yt-dlp --download-archive .download-archive -o "%%(title)s.%%(ext)s" "https://www.youtube.com/playlist?list=$WATCH_LATER_PLAYLIST_ID"'
+
+[Service]
+Type=oneshot
+TimeoutStartSec=1800

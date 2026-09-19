@@ -97,12 +97,26 @@ install_packages() {
 
 cmd_help() {
 	cat <<-'EOF'
-	██████  ██ ███████ ██   ██ ███████ ████████ ████████ ███████
-	██   ██ ██ ██      ██  ██  ██         ██       ██    ██
-	██   ██ ██ ███████ █████   █████      ██       ██    █████
-	██   ██ ██      ██ ██  ██  ██         ██       ██    ██
-	██████  ██ ███████ ██   ██ ███████    ██       ██    ███████
-
+   ___________________________.
+  |;;|                     |;;||
+  |[]|---------------------|[]||
+  |;;|                     |;;||
+  |;;|                     |;;||
+  |;;|                     |;;||
+  |;;|                     |;;||
+  |;;|                     |;;||
+  |;;|                     |;;||
+  |;;|_____________________|;;||
+  |;;;;;;;;;;;;;;;;;;;;;;;;;;;||
+  |;;;;;;_______________ ;;;;;||
+  |;;;;;|  ___          |;;;;;||
+  |;;;;;| |;;;|         |;;;;;||
+  |;;;;;| |;;;|         |;;;;;||
+  |;;;;;| |;;;|         |;;;;;||
+  |;;;;;| |;;;|         |;;;;;||
+  |;;;;;| |___|         |;;;;;||
+  \_____|_______________|_____||
+   ~~~~~^^^^^^^^^^^^^^^^^~~~~~~
 	Usage: diskette <command>
 
 	Commands:
@@ -123,7 +137,7 @@ cmd_install() {
 	install_packages
 
 	info "Creating data directories"
-	sudo mkdir -p /srv/media /srv/sync /srv/databases/postgres/data
+	sudo mkdir -p /srv/media /srv/media/download /srv/sync /srv/databases/postgres/data
 	sudo mkdir -p /srv/appdata/jellyfin/{config,cache} /srv/appdata/syncthing /srv/appdata/postgres/backup
 	sudo chown -R "$(id -un)":"$(id -gn)" /srv/media /srv/sync /srv/databases /srv/appdata
 
@@ -136,6 +150,7 @@ cmd_install() {
 	info "Starting services"
 	systemctl --user start $SERVICES
 	systemctl --user enable --now backup.timer
+	systemctl --user enable --now youtube-watch-later.timer
 }
 
 cmd_update() {
