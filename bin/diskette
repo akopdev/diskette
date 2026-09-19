@@ -114,7 +114,7 @@ cmd_help() {
 	  stop [SERVICE]              Stop running service
 	  restart [SERVICE]           Restart all services
 	  logs [SERVICE]              Show full log history
-	  metrics [-w|--watch]        Show server performance metrics
+	  stats [-w|--watch]          Show server performance metrics
 	  help                        Show this help
 	EOF
 }
@@ -219,7 +219,7 @@ cmd_logs() {
   fi
 }
 
-cmd_metrics() {
+cmd_stats() {
 	print_network
 	echo
 	print_hdd
@@ -261,7 +261,7 @@ case "$cmd" in
   stop) cmd_stop "$@" ;;
   restart) cmd_restart "$@" ;;
   logs) cmd_logs "$@" ;;
-  metrics) cmd_metrics "$@" ;;
+  stats) cmd_stats "$@" ;;
   help | -h | --help) cmd_help ;;
   *)
   error "Unknown command: $cmd"
