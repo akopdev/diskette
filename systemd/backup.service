@@ -1,5 +1,5 @@
 [Unit]
-Description=Diskette nightly backup (pg_dump, then restic backup, then prune)
+Description=Diskette nightly backup
 After=postgres.service
 Requires=postgres.service
 

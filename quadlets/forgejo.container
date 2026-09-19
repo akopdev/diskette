@@ -1,0 +1,31 @@
+[Unit]
+Description=Forgejo git service
+After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Container]
+Image=codeberg.org/forgejo/forgejo:latest
+AutoUpdate=registry
+ContainerName=forgejo
+Network=diskette.network
+PublishPort=3000:3000
+PublishPort=2222:22
+Volume=/srv/projects:/data
+Environment=USER_UID=1000
+Environment=USER_GID=1000
+Environment=TZ=Europe/Amsterdam
+UserNS=keep-id:uid=1000,gid=1000
+
+# Health check
+HealthCmd=curl -f http://localhost:3000/api/healthz || exit 1
+HealthInterval=30s
+HealthTimeout=10s
+HealthRetries=3
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target
