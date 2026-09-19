@@ -5,15 +5,18 @@ StartLimitIntervalSec=60
 StartLimitBurst=3
 
 [Container]
-Image=codeberg.org/forgejo/forgejo:latest
+Image=codeberg.org/forgejo/forgejo:16-rootless
 AutoUpdate=registry
 ContainerName=forgejo
 Network=diskette.network
 PublishPort=3000:3000
 PublishPort=2222:22
-Volume=/srv/projects:/data
-Environment=USER_UID=1000
-Environment=USER_GID=1000
+Volume=/srv/projects/repositories:/repositories
+Volume=/srv/projects/packages:/packages
+Volume=/srv/appdata/forgejo/data:/var/lib/gitea
+Volume=/srv/appdata/forgejo/config:/etc/gitea
+Environment=GITEA__repository__ROOT=/repositories
+Environment=GITEA__storage_packages__PATH=/packages
 Environment=TZ=Europe/Amsterdam
 UserNS=keep-id:uid=1000,gid=1000
 

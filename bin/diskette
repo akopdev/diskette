@@ -137,8 +137,8 @@ cmd_install() {
 	install_packages
 
 	info "Creating data directories"
-	sudo mkdir -p /srv/media /srv/media/Downloads /srv/sync /srv/projects /srv/databases/postgres/data
-	sudo mkdir -p /srv/appdata/jellyfin/{config,cache} /srv/appdata/syncthing /srv/appdata/postgres/backup
+	sudo mkdir -p /srv/media /srv/media/Downloads /srv/sync /srv/projects/{repositories,packages} /srv/databases/postgres/data
+	sudo mkdir -p /srv/appdata/jellyfin/{config,cache} /srv/appdata/syncthing /srv/appdata/forgejo/{data,config} /srv/appdata/postgres/backup
 	sudo chown -R "$(id -un)":"$(id -gn)" /srv/media /srv/sync /srv/projects /srv/databases /srv/appdata
 
 	info "Enabling linger for $(id -un)"
@@ -177,7 +177,7 @@ cmd_backup() {
 		|| error "pg_dumpall failed. Aborting backup ..."
 
 	info "Running restic backup"
-	restic backup --tag diskette --host fd0 /srv/appdata/jellyfin/config /srv/appdata/syncthing /srv/media /srv/projects /srv/appdata/postgres/backup
+	restic backup --tag diskette --host fd0 /srv/appdata/jellyfin/config /srv/appdata/syncthing /srv/appdata/forgejo /srv/media /srv/projects /srv/appdata/postgres/backup
 
 	info "Pruning old snapshots"
 	restic forget --tag diskette --host fd0 --prune --keep-daily 7 --keep-weekly 4 --keep-monthly 6
