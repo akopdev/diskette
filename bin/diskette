@@ -136,6 +136,10 @@ cmd_help() {
 cmd_install() {
 	install_packages
 
+	info "Allowing rootless containers to bind 80 port"
+	echo 'net.ipv4.ip_unprivileged_port_start=80' | sudo tee /etc/sysctl.d/podman-privileged-ports.conf >/dev/null
+	sudo sysctl --system >/dev/null
+
 	info "Creating data directories"
 	sudo mkdir -p /srv/media /srv/media/Downloads /srv/sync /srv/projects/{repositories,packages} /srv/databases/postgres/data
 	sudo mkdir -p /srv/appdata/jellyfin/{config,cache} /srv/appdata/syncthing /srv/appdata/forgejo/{data,config} /srv/appdata/postgres/backup
