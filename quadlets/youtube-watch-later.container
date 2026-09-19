@@ -8,9 +8,9 @@ ContainerName=youtube-watch-later
 AutoUpdate=registry
 Network=diskette.network
 Volume=/srv/media/Downloads:/downloads
-EnvironmentFile=/srv/diskette/.env
 Exec=--download-archive .download-archive -o "%%(title)s.%%(ext)s" "https://www.youtube.com/playlist?list=${WATCH_LATER_PLAYLIST_ID}"
 
 [Service]
 Type=oneshot
+EnvironmentFile=/srv/diskette/.env
 TimeoutStartSec=1800
