@@ -10,7 +10,7 @@ Network=diskette.network
 Volume=/srv/media/Downloads:/downloads
 EnvironmentFile=/srv/diskette/.env
 Entrypoint=sh -c
-Exec='yt-dlp --download-archive .download-archive -o "%%(title)s.%%(ext)s" "https://www.youtube.com/playlist?list=$WATCH_LATER_PLAYLIST_ID"'
+Exec=--download-archive .download-archive -o "%%(title)s.%%(ext)s" "https://www.youtube.com/playlist?list=${WATCH_LATER_PLAYLIST_ID}"
 
 [Service]
 Type=oneshot
