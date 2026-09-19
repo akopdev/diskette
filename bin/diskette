@@ -137,7 +137,7 @@ cmd_install() {
 	install_packages
 
 	info "Creating data directories"
-	sudo mkdir -p /srv/media /srv/media/download /srv/sync /srv/databases/postgres/data
+	sudo mkdir -p /srv/media /srv/media/Downloads /srv/sync /srv/databases/postgres/data
 	sudo mkdir -p /srv/appdata/jellyfin/{config,cache} /srv/appdata/syncthing /srv/appdata/postgres/backup
 	sudo chown -R "$(id -un)":"$(id -gn)" /srv/media /srv/sync /srv/databases /srv/appdata
 

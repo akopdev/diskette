@@ -7,7 +7,7 @@ Image=ghcr.io/jauderho/yt-dlp:latest
 ContainerName=youtube-watch-later
 AutoUpdate=registry
 Network=diskette.network
-Volume=/srv/media/download:/downloads
+Volume=/srv/media/Downloads:/downloads
 EnvironmentFile=/srv/diskette/.env
 Entrypoint=sh -c
 Exec='yt-dlp --download-archive .download-archive -o "%%(title)s.%%(ext)s" "https://www.youtube.com/playlist?list=$WATCH_LATER_PLAYLIST_ID"'
