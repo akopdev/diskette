@@ -8,7 +8,7 @@ ContainerName=youtube-watch-later
 AutoUpdate=registry
 Network=diskette.network
 Volume=/srv/media/Downloads:/downloads
-Exec=--download-archive .download-archive -o "%%(title)s.%%(ext)s" "https://www.youtube.com/playlist?list=${WATCH_LATER_PLAYLIST_ID}"
+Exec=--download-archive .download-archive --write-thumbnail --embed-metadata -f "bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[vcodec^=avc1][acodec^=mp4a]" --merge-output-format mp4 -o "%%(title)s.%%(ext)s" "https://www.youtube.com/playlist?list=${WATCH_LATER_PLAYLIST_ID}"
 
 [Service]
 Type=oneshot
