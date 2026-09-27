@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+REPO_ROOT=${REPO_ROOT:-"/srv/diskette"}
+ENV_FILE="$REPO_ROOT/.env"
+YT_DLP_IMAGE="ghcr.io/jauderho/yt-dlp:latest"
+
+info() {
+	printf '\033[33m[ INFO ]\033[0m %s\n' "$*"
+}
+
+error() {
+	printf '\033[31m[ ERROR ]\033[0m %b\n' "$*" >&2
+	exit 1
+}
+
+cmd_help() {
+	cat <<-'EOF'
+	Usage: yt <command> [args]
+
+	Commands:
+	  download     Download a YouTube video
+	  update       Update to the latest yt-dlp
+	  help         Show this help
+	EOF
+}
+
+cmd_update() {
+	info "Update to latest $YT_DLP_IMAGE"
+	podman pull "$YT_DLP_IMAGE"
+}
+
+cmd_download() {
+	url="${1:-}"
+	[ -n "$url" ] || error "Usage: yt download <youtube-url>"
+
+	info "Downloading $url"
+	podman run --rm \
+		--volume "$DOWNLOADS_DIR:/downloads" \
+		"$YT_DLP_IMAGE" \
+		--download-archive .download-archive \
+		--write-thumbnail --embed-metadata \
+		-f "bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[vcodec^=avc1][acodec^=mp4a]" \
+		--merge-output-format mp4 \
+		-o "%(title)s.%(ext)s" \
+		"$url"
+}
+
+# Check if config file exists
+if [ ! -f "$ENV_FILE" ]; then
+	error "$ENV_FILE not found.\n\nRun: cp $REPO_ROOT/.env.example $ENV_FILE\nthen fill in real values."
+fi
+
+# Load environment variables from config file
+set -a
+source "$ENV_FILE"
+set +a
+
+cmd="${1:-help}"
+[ $# -gt 0 ] && shift
+
+case "$cmd" in
+	download) cmd_download "$@" ;;
+	update) cmd_update "$@" ;;
+	help | -h | --help) cmd_help ;;
+	*)
+		error "Unknown command: $cmd"
+		;;
+esac

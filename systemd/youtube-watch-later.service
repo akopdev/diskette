@@ -1,0 +1,9 @@
+[Unit]
+Description=Fetch new videos from the YouTube Watch Later playlist
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/srv/diskette/.env
+ExecStart=/srv/diskette/bin/yt download "https://www.youtube.com/playlist?list=${WATCH_LATER_PLAYLIST_ID}"
+TimeoutStartSec=1800
