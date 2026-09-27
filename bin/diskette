@@ -8,7 +8,7 @@ export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNT
 QUADLET_DIR=${QUADLET_DIR:-"$HOME/.config/containers/systemd"}
 SYSTEMD_DIR=${SYSTEMD_DIR:-"$HOME/.config/systemd/user"}
 ENV_FILE="$REPO_ROOT/.env"
-SERVICES="postgres.service jellyfin.service syncthing.service forgejo.service youtube-watch-later.service"
+SERVICES="postgres.service jellyfin.service syncthing.service forgejo.service navidrome.service youtube-watch-later.service"
 
 info() {
 	printf '\033[33m[ INFO ]\033[0m %s\n' "$*"
@@ -141,8 +141,8 @@ cmd_install() {
 	sudo sysctl --system >/dev/null
 
 	info "Creating data directories"
-	sudo mkdir -p /srv/media /srv/media/Downloads /srv/sync /srv/projects/{repositories,packages} /srv/databases/postgres/data
-	sudo mkdir -p /srv/appdata/jellyfin/{config,cache} /srv/appdata/syncthing /srv/appdata/forgejo/{data,config} /srv/appdata/postgres/backup
+	sudo mkdir -p /srv/media /srv/media/Downloads /srv/media/Music /srv/sync /srv/projects/{repositories,packages} /srv/databases/postgres/data
+	sudo mkdir -p /srv/appdata/jellyfin/{config,cache} /srv/appdata/syncthing /srv/appdata/forgejo/{data,config} /srv/appdata/navidrome /srv/appdata/postgres/backup
 	sudo chown -R "$(id -un)":"$(id -gn)" /srv/media /srv/sync /srv/projects /srv/databases /srv/appdata
 
 	info "Enabling linger for $(id -un)"
@@ -181,7 +181,7 @@ cmd_backup() {
 		|| error "pg_dumpall failed. Aborting backup ..."
 
 	info "Running restic backup"
-	restic backup --tag diskette --host fd0 /srv/appdata/jellyfin/config /srv/appdata/syncthing /srv/appdata/forgejo /srv/media /srv/projects /srv/appdata/postgres/backup
+	restic backup --tag diskette --host fd0 /srv/appdata/jellyfin/config /srv/appdata/syncthing /srv/appdata/forgejo /srv/appdata/navidrome /srv/media /srv/media/Music /srv/projects /srv/appdata/postgres/backup
 
 	info "Pruning old snapshots"
 	restic forget --tag diskette --host fd0 --prune --keep-daily 7 --keep-weekly 4 --keep-monthly 6
@@ -207,7 +207,7 @@ cmd_restore() {
 	podman exec -i postgres psql -U postgres </srv/appdata/postgres/backup/all-databases.sql
 
 	info "Starting remaining services"
-	systemctl --user start jellyfin.service syncthing.service forgejo.service
+	systemctl --user start jellyfin.service syncthing.service forgejo.service navidrome.service
 }
 
 cmd_start() {

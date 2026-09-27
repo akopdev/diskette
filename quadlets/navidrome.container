@@ -1,0 +1,23 @@
+[Unit]
+Description=Navidrome music server
+After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Container]
+Image=docker.io/deluan/navidrome:latest
+AutoUpdate=registry
+ContainerName=navidrome
+Network=diskette.network
+PublishPort=4533:4533
+Volume=/srv/appdata/navidrome:/data
+Volume=/srv/media/Music:/music:ro
+Environment=TZ=Europe/Amsterdam
+UserNS=keep-id:uid=1000,gid=1000
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target
