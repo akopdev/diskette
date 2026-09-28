@@ -50,13 +50,10 @@ wait_for_postgres() {
 	i=0
 	while ! podman exec postgres pg_isready -U postgres >/dev/null 2>&1; do
 		i=$((i + 1))
-		[ "$i" -le 60 ] || { error "Failed to start postgres. Run 'diskette logs' for details."; }
+		[ "$i" -le 60 ] || { error "Failed to start postgres. Run 'diskette logs postgres.service' for details."; }
 		sleep 1
 	done
-}
 
-ensure_immich_database() {
-	wait_for_postgres
 	if ! podman exec postgres psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname = 'immich'" | grep -q 1; then
 		info "Creating immich database"
 		podman exec postgres psql -U postgres -c "CREATE DATABASE immich"
@@ -135,7 +132,8 @@ cmd_help() {
 	  start [SERVICE]             Start service
 	  stop [SERVICE]              Stop running service
 	  restart [SERVICE]           Restart all services
-	  logs [SERVICE]              Show full log history
+	  journal [SERVICE]           Show full journal history
+	  logs <SERVICE>              Show live container logs
 	  stats [-w|--watch]          Show server performance metrics
 	  help                        Show this help
 	EOF
@@ -222,7 +220,7 @@ cmd_start() {
 	info "Starting $target"
 	systemctl --user start $target
 	case " $target " in
-		*" postgres.service "*) ensure_immich_database ;;
+		*" postgres.service "*) wait_for_postgres ;;
 	esac
 }
 
@@ -239,16 +237,22 @@ cmd_restart() {
 	info "Restarting services"
 	systemctl --user restart $target
 	case " $target " in
-		*" postgres.service "*) ensure_immich_database ;;
+		*" postgres.service "*) wait_for_postgres ;;
 	esac
 }
 
-cmd_logs() {
+cmd_journal() {
   if [ -n "$1" ]; then
     journalctl "_SYSTEMD_USER_UNIT=$1" | less +G
   else
     journalctl _SYSTEMD_USER_UNIT=${SERVICES// / _SYSTEMD_USER_UNIT=} | less +G
   fi
+}
+
+cmd_logs() {
+	target="${1:-}"
+	[ -n "$target" ] || error "Usage: diskette logs <service>"
+	podman logs -f "${target%.service}"
 }
 
 cmd_stats() {
@@ -292,6 +296,7 @@ case "$cmd" in
   start) cmd_start "$@" ;;
   stop) cmd_stop "$@" ;;
   restart) cmd_restart "$@" ;;
+  journal) cmd_journal "$@" ;;
   logs) cmd_logs "$@" ;;
   stats) cmd_stats "$@" ;;
   help | -h | --help) cmd_help ;;
