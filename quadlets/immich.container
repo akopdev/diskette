@@ -8,7 +8,7 @@ StartLimitBurst=3
 [Container]
 Image=ghcr.io/immich-app/immich-server:release
 AutoUpdate=registry
-ContainerName=immich-server
+ContainerName=immich
 Network=diskette.network
 PublishPort=2283:2283
 Volume=/srv/media/Photos:/data
