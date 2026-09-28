@@ -2,8 +2,8 @@
 Description=Immich photo server
 After=network-online.target postgres.service valkey.service
 Requires=postgres.service valkey.service
-StartLimitIntervalSec=60
-StartLimitBurst=3
+StartLimitIntervalSec=120
+StartLimitBurst=10
 
 [Container]
 Image=ghcr.io/immich-app/immich-server:release
@@ -24,6 +24,7 @@ Environment=TZ=Europe/Amsterdam
 
 [Service]
 Restart=always
+RestartSec=5
 TimeoutStartSec=900
 
 [Install]
