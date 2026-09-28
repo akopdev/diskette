@@ -13,7 +13,6 @@ Network=diskette.network
 PublishPort=2283:2283
 Volume=/srv/media/Photos:/data
 Volume=/etc/localtime:/etc/localtime:ro
-EnvironmentFile=/srv/diskette/.env
 Environment=DB_HOSTNAME=postgres
 Environment=DB_USERNAME=${POSTGRES_USER}
 Environment=DB_PASSWORD=${POSTGRES_PASSWORD}
@@ -23,6 +22,7 @@ Environment=IMMICH_MACHINE_LEARNING_ENABLED=false
 Environment=TZ=Europe/Amsterdam
 
 [Service]
+EnvironmentFile=/srv/diskette/.env
 Restart=always
 RestartSec=5
 TimeoutStartSec=900
