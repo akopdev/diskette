@@ -1,0 +1,18 @@
+[Unit]
+Description=Valkey cache for Immich
+After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Container]
+Image=docker.io/valkey/valkey:9-alpine
+AutoUpdate=registry
+ContainerName=valkey
+Network=diskette.network
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

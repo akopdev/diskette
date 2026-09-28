@@ -8,7 +8,7 @@ export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNT
 QUADLET_DIR=${QUADLET_DIR:-"$HOME/.config/containers/systemd"}
 SYSTEMD_DIR=${SYSTEMD_DIR:-"$HOME/.config/systemd/user"}
 ENV_FILE="$REPO_ROOT/.env"
-SERVICES="postgres.service jellyfin.service syncthing.service forgejo.service navidrome.service youtube-watch-later.service"
+SERVICES="postgres.service jellyfin.service syncthing.service forgejo.service navidrome.service valkey.service immich-server.service youtube-watch-later.service"
 
 info() {
 	printf '\033[33m[ INFO ]\033[0m %s\n' "$*"
@@ -53,6 +53,14 @@ wait_for_postgres() {
 		[ "$i" -le 60 ] || { error "Failed to start postgres. Run 'diskette logs' for details."; }
 		sleep 1
 	done
+}
+
+ensure_immich_database() {
+	wait_for_postgres
+	if ! podman exec postgres psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname = 'immich'" | grep -q 1; then
+		info "Creating immich database"
+		podman exec postgres psql -U postgres -c "CREATE DATABASE immich"
+	fi
 }
 
 
@@ -141,7 +149,7 @@ cmd_install() {
 	sudo sysctl --system >/dev/null
 
 	info "Creating data directories"
-	sudo mkdir -p /srv/media /srv/media/Downloads /srv/media/Music /srv/sync /srv/projects/{repositories,packages} /srv/databases/postgres/data
+	sudo mkdir -p /srv/media /srv/media/Downloads /srv/media/Music /srv/media/Photos /srv/sync /srv/projects/{repositories,packages} /srv/databases/postgres/data
 	sudo mkdir -p /srv/appdata/jellyfin/{config,cache} /srv/appdata/syncthing /srv/appdata/forgejo/{data,config} /srv/appdata/navidrome /srv/appdata/postgres/backup
 	sudo chown -R "$(id -un)":"$(id -gn)" /srv/media /srv/sync /srv/projects /srv/databases /srv/appdata
 
@@ -151,8 +159,7 @@ cmd_install() {
 	deploy_units
 	restic_init
 
-	info "Starting services"
-	systemctl --user start $SERVICES
+	cmd_start
 	systemctl --user enable --now backup.timer
 	systemctl --user enable --now youtube-watch-later.timer
 }
@@ -181,7 +188,7 @@ cmd_backup() {
 		|| error "pg_dumpall failed. Aborting backup ..."
 
 	info "Running restic backup"
-	restic backup --tag diskette --host fd0 /srv/appdata/jellyfin/config /srv/appdata/syncthing /srv/appdata/forgejo /srv/appdata/navidrome /srv/media /srv/media/Music /srv/projects /srv/appdata/postgres/backup
+	restic backup --tag diskette --host fd0 /srv/appdata/jellyfin/config /srv/appdata/syncthing /srv/appdata/forgejo /srv/appdata/navidrome /srv/media /srv/media/Music /srv/media/Photos /srv/projects /srv/appdata/postgres/backup
 
 	info "Pruning old snapshots"
 	restic forget --tag diskette --host fd0 --prune --keep-daily 7 --keep-weekly 4 --keep-monthly 6
@@ -207,13 +214,16 @@ cmd_restore() {
 	podman exec -i postgres psql -U postgres </srv/appdata/postgres/backup/all-databases.sql
 
 	info "Starting remaining services"
-	systemctl --user start jellyfin.service syncthing.service forgejo.service navidrome.service
+	systemctl --user start jellyfin.service syncthing.service forgejo.service navidrome.service valkey.service immich-server.service
 }
 
 cmd_start() {
 	target="${1:-$SERVICES}"
 	info "Starting $target"
 	systemctl --user start $target
+	case " $target " in
+		*" postgres.service "*) ensure_immich_database ;;
+	esac
 }
 
 cmd_stop() {
@@ -228,6 +238,9 @@ cmd_restart() {
   reload_daemon
 	info "Restarting services"
 	systemctl --user restart $target
+	case " $target " in
+		*" postgres.service "*) ensure_immich_database ;;
+	esac
 }
 
 cmd_logs() {
