@@ -1,0 +1,23 @@
+[Unit]
+Description=Immich proxy for iOS background uploads
+After=network-online.target immich.service
+Requires=immich.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Container]
+Image=docker.io/fawenyo/immich-proxy:latest
+AutoUpdate=registry
+ContainerName=immich-proxy
+Network=diskette.network
+PublishPort=2280:8080
+Environment=LISTEN_ADDR=:8080
+Environment=IMMICH_SERVER_URL=http://immich:2283
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

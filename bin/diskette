@@ -8,7 +8,7 @@ export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNT
 QUADLET_DIR=${QUADLET_DIR:-"$HOME/.config/containers/systemd"}
 SYSTEMD_DIR=${SYSTEMD_DIR:-"$HOME/.config/systemd/user"}
 ENV_FILE="$REPO_ROOT/.env"
-SERVICES="postgres.service jellyfin.service syncthing.service forgejo.service navidrome.service valkey.service immich.service youtube-watch-later.service"
+SERVICES="postgres.service jellyfin.service syncthing.service forgejo.service navidrome.service valkey.service immich.service immich-proxy.service youtube-watch-later.service"
 
 info() {
 	printf '\033[33m[ INFO ]\033[0m %s\n' "$*"
@@ -212,7 +212,7 @@ cmd_restore() {
 	podman exec -i postgres psql -U postgres </srv/appdata/postgres/backup/all-databases.sql
 
 	info "Starting remaining services"
-	systemctl --user start jellyfin.service syncthing.service forgejo.service navidrome.service valkey.service immich.service
+	systemctl --user start jellyfin.service syncthing.service forgejo.service navidrome.service valkey.service immich.service immich-proxy.service
 }
 
 cmd_start() {
