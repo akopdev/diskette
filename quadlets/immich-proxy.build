@@ -1,0 +1,3 @@
+[Build]
+ImageTag=localhost/immich-proxy:latest
+SetWorkingDirectory=https://github.com/FawenYo/YAIIU.git#main:immich-proxy
